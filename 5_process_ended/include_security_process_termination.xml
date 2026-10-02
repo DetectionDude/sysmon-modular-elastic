@@ -9,6 +9,9 @@
         <Image condition="image">SecurityHealthService.exe</Image>
         <Image condition="image">elastic-endpoint.exe</Image>
         <Image condition="image">elastic-agent.exe</Image>
+        <Image condition="image">elastic-otel-collector.exe</Image>
+        <Image condition="image">endpoint-security.exe</Image>
+        <Image condition="image">agentbeat.exe</Image>
         <Image condition="image">Sysmon.exe</Image>
         <Image condition="image">Sysmon64.exe</Image>
       </ProcessTerminate>

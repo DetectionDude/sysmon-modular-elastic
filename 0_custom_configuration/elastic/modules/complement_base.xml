@@ -1,10 +1,27 @@
-<Sysmon schemaversion="4.50">
-  <!--Switchboard of the Elastic Defend complement profile. Each event below is logged in full, apart from the
-      exclusions that complement.txt selects. Elastic Defend recorded none of this telemetry in the lab comparison.
-      Do not select include modules for these events: a single include rule turns an event into an allow-list.-->
+<Sysmon schemaversion="4.83">
+  <!--Switchboard of the Elastic Defend complement profile.
+      Events 2, 8, 9, 17/18, 19-21, and 25 are logged in full, apart from the exclusions that complement.txt selects.
+      Elastic Defend recorded none of this telemetry in the lab comparison. Do not select include modules for these
+      events: a single include rule turns an event into an allow-list.
+      Events 1, 3, 6, 7, 22, 23, 24, 27, and 28 are switched off with empty include filters. Sysmon does not document
+      what it does with an event that has no filter, and a default installation logs events 1, 2, 5, and 6. An include
+      module for one of these events, such as the optional Event 3 module, logs only what its rules match.
+      Events 5, 10-15, 26, and 29 have no switch here. complement.txt selects include modules for them.-->
   <EventFiltering>
     <RuleGroup name="" groupRelation="or">
+      <ProcessCreate onmatch="include"/>
+    </RuleGroup>
+    <RuleGroup name="" groupRelation="or">
       <FileCreateTime onmatch="exclude"/>
+    </RuleGroup>
+    <RuleGroup name="" groupRelation="or">
+      <NetworkConnect onmatch="include"/>
+    </RuleGroup>
+    <RuleGroup name="" groupRelation="or">
+      <DriverLoad onmatch="include"/>
+    </RuleGroup>
+    <RuleGroup name="" groupRelation="or">
+      <ImageLoad onmatch="include"/>
     </RuleGroup>
     <RuleGroup name="" groupRelation="or">
       <CreateRemoteThread onmatch="exclude"/>
@@ -19,7 +36,22 @@
       <WmiEvent onmatch="exclude"/>
     </RuleGroup>
     <RuleGroup name="" groupRelation="or">
+      <DnsQuery onmatch="include"/>
+    </RuleGroup>
+    <RuleGroup name="" groupRelation="or">
+      <FileDelete onmatch="include"/>
+    </RuleGroup>
+    <RuleGroup name="" groupRelation="or">
+      <ClipboardChange onmatch="include"/>
+    </RuleGroup>
+    <RuleGroup name="" groupRelation="or">
       <ProcessTampering onmatch="exclude"/>
+    </RuleGroup>
+    <RuleGroup name="" groupRelation="or">
+      <FileBlockExecutable onmatch="include"/>
+    </RuleGroup>
+    <RuleGroup name="" groupRelation="or">
+      <FileBlockShredding onmatch="include"/>
     </RuleGroup>
   </EventFiltering>
 </Sysmon>

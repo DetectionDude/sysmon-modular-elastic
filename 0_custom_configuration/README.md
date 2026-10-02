@@ -101,4 +101,4 @@ The current Go merger preserves each source `RuleGroup`. The generated XML can t
 
 ## Elastic Defend profiles
 
-`elastic/` builds two configurations for hosts that also run Elastic Defend. The research profile logs every event except Elastic Agent and Elastic Defend noise. The complement profile collects only what Elastic Defend did not record in a lab comparison. See the [Elastic Defend profiles guide](elastic/README.md).
+`elastic/` builds two configurations for hosts that also run Elastic Defend. The research profile logs every event except Elastic Agent and Elastic Defend noise. The complement profile collects what Elastic Defend did not record in a lab comparison, plus evidence of Elastic Defend being stopped or tampered with and provisional LSASS access rules. See the [Elastic Defend profiles guide](elastic/README.md).

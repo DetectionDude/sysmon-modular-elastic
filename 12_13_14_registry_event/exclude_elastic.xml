@@ -2,7 +2,11 @@
   <EventFiltering>
     <RuleGroup name="" groupRelation="or">
       <RegistryEvent onmatch="exclude">
-        <Image condition="is">C:\Program Files\Elastic\Endpoint\elastic-endpoint.exe</Image> <!--Elastic Defend: very noisy CreateKey events-->
+        <Rule groupRelation="and">
+          <!--Elastic Defend: very noisy CreateKey events-->
+          <Image condition="is">C:\Program Files\Elastic\Endpoint\elastic-endpoint.exe</Image>
+          <EventType condition="is">CreateKey</EventType>
+        </Rule>
       </RegistryEvent>
     </RuleGroup>
   </EventFiltering>
