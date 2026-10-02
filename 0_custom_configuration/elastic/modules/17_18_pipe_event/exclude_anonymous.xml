@@ -1,0 +1,12 @@
+<Sysmon schemaversion="4.30">
+  <EventFiltering>
+    <RuleGroup name="" groupRelation="or">
+      <PipeEvent onmatch="exclude">
+        <!--Anonymous pipes only. 17_18_pipe_event/exclude_windows_generic.xml also drops \srvsvc, \wkssvc, \lsass,
+            \winreg, and \spoolss, which this profile keeps. The match is exact, so a named pipe called
+            "Anonymous Pipe" is still logged-->
+        <PipeName condition="is">&lt;Anonymous Pipe&gt;</PipeName>
+      </PipeEvent>
+    </RuleGroup>
+  </EventFiltering>
+</Sysmon>

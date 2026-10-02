@@ -1,0 +1,25 @@
+<Sysmon schemaversion="4.50">
+  <!--Switchboard of the Elastic Defend complement profile. Each event below is logged in full, apart from the
+      exclusions that complement.txt selects. Elastic Defend recorded none of this telemetry in the lab comparison.
+      Do not select include modules for these events: a single include rule turns an event into an allow-list.-->
+  <EventFiltering>
+    <RuleGroup name="" groupRelation="or">
+      <FileCreateTime onmatch="exclude"/>
+    </RuleGroup>
+    <RuleGroup name="" groupRelation="or">
+      <CreateRemoteThread onmatch="exclude"/>
+    </RuleGroup>
+    <RuleGroup name="" groupRelation="or">
+      <RawAccessRead onmatch="exclude"/>
+    </RuleGroup>
+    <RuleGroup name="" groupRelation="or">
+      <PipeEvent onmatch="exclude"/>
+    </RuleGroup>
+    <RuleGroup name="" groupRelation="or">
+      <WmiEvent onmatch="exclude"/>
+    </RuleGroup>
+    <RuleGroup name="" groupRelation="or">
+      <ProcessTampering onmatch="exclude"/>
+    </RuleGroup>
+  </EventFiltering>
+</Sysmon>

@@ -1,16 +1,14 @@
-<Sysmon schemaversion="4.40">
+<Sysmon schemaversion="4.30">
   <EventFiltering>
     <RuleGroup name="" groupRelation="or">
-      <NetworkConnect onmatch="exclude">
-        <Image condition="end with">winlogbeat.exe</Image> <!--Credit d4ph1l -->
-        <Image condition="end with">packetbeat.exe</Image>
+      <PipeEvent onmatch="exclude">
         <Image condition="is">C:\Program Files\Elastic\Endpoint\elastic-endpoint.exe</Image> <!--Elastic Defend-->
         <Rule groupRelation="and">
-          <!--Elastic Agent 9.x collector, installed in a versioned folder. Sends to Elasticsearch-->
+          <!--Elastic Agent 9.x collector, installed in a versioned folder-->
           <Image condition="begin with">C:\Program Files\Elastic\Agent\data\elastic-agent-</Image>
           <Image condition="end with">\components\elastic-otel-collector.exe</Image>
         </Rule>
-      </NetworkConnect>
+      </PipeEvent>
     </RuleGroup>
   </EventFiltering>
 </Sysmon>

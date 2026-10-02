@@ -98,3 +98,7 @@ By default it writes `sysmonconfig-mde-augment.xml` in the repository root. Pass
 ```
 
 The current Go merger preserves each source `RuleGroup`. The generated XML can therefore differ in layout from the older PowerShell-generated file even when it selects the same modules.
+
+## Elastic Defend profiles
+
+`elastic/` builds two configurations for hosts that also run Elastic Defend. The research profile logs every event except Elastic Agent and Elastic Defend noise. The complement profile collects only what Elastic Defend did not record in a lab comparison. See the [Elastic Defend profiles guide](elastic/README.md).

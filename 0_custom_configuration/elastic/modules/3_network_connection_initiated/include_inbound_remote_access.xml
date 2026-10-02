@@ -1,0 +1,24 @@
+<Sysmon schemaversion="4.30">
+  <EventFiltering>
+    <RuleGroup name="" groupRelation="or">
+      <NetworkConnect onmatch="include">
+        <!--Optional. Inbound remote-access connections, one record per connection with the receiving process.
+            Elastic Defend reported repeated inbound connections once (two sshd.exe records against Sysmon's 1,444 on
+            the lab host), and packet capture has no process. Use it where no packet capture runs.
+            SMB (445) and RPC (135) are left out because of their volume on servers-->
+        <Rule name="technique_id=T1021.004,technique_name=SSH" groupRelation="and">
+          <Initiated condition="is">false</Initiated>
+          <DestinationPort condition="is">22</DestinationPort>
+        </Rule>
+        <Rule name="technique_id=T1021.001,technique_name=Remote Desktop Protocol" groupRelation="and">
+          <Initiated condition="is">false</Initiated>
+          <DestinationPort condition="is">3389</DestinationPort>
+        </Rule>
+        <Rule name="technique_id=T1021.006,technique_name=Windows Remote Management" groupRelation="and">
+          <Initiated condition="is">false</Initiated>
+          <DestinationPort condition="is any">5985;5986</DestinationPort>
+        </Rule>
+      </NetworkConnect>
+    </RuleGroup>
+  </EventFiltering>
+</Sysmon>

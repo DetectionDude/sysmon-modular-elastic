@@ -7,6 +7,8 @@
         <Image condition="image">SenseIR.exe</Image>
         <Image condition="image">SenseNdr.exe</Image>
         <Image condition="image">SecurityHealthService.exe</Image>
+        <Image condition="image">elastic-endpoint.exe</Image>
+        <Image condition="image">elastic-agent.exe</Image>
         <Image condition="image">Sysmon.exe</Image>
         <Image condition="image">Sysmon64.exe</Image>
       </ProcessTerminate>

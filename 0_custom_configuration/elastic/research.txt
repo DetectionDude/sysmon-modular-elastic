@@ -1,0 +1,15 @@
+# Elastic Defend research profile: every event, minus Elastic Agent and Elastic Defend noise.
+# For short, controlled research sessions. On a 2-vCPU lab host the earlier research profile produced
+# 5.04 million records in 8.5 hours and degraded Elastic Defend.
+#
+# Paths are relative to the repository root. Do not add include modules: research_base.xml logs
+# every event in full, and a single include rule turns an event into an allow-list.
+
+0_custom_configuration/elastic/modules/research_base.xml
+
+3_network_connection_initiated/exclude_elastic.xml
+10_process_access/exclude_elastic.xml
+11_file_create/exclude_elastic_logs.xml
+12_13_14_registry_event/exclude_elastic.xml
+17_18_pipe_event/exclude_elastic.xml
+25_process_tampering/exclude_elastic.xml

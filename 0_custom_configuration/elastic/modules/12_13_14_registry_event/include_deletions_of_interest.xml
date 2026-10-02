@@ -1,0 +1,39 @@
+<Sysmon schemaversion="4.30">
+  <EventFiltering>
+    <RuleGroup name="" groupRelation="or">
+      <RegistryEvent onmatch="include">
+        <!--Deletions and renames only. Elastic Defend recorded no registry deletion on either lab host. It recorded the
+            tested value change, so value changes (Event 13) are left to Elastic Defend.
+            Key-level volume is unknown: lsass.exe and svchost.exe deleted thousands of keys and values a day on the lab
+            host, so LSA and per-logon keys are deliberately not listed here-->
+        <Rule name="technique_id=T1070.009,technique_name=Clear Persistence" groupRelation="and">
+          <!--Autostart locations-->
+          <EventType condition="is any">DeleteKey;DeleteValue;RenameKey</EventType>
+          <TargetObject condition="contains any">\CurrentVersion\Run;\Policies\Explorer\Run;\Winlogon\Shell;\Winlogon\Userinit;\Winlogon\Notify;\Image File Execution Options\;\SilentProcessExit\;\CurrentVersion\Windows\AppInit_DLLs;\Session Manager\AppCertDlls;\Session Manager\BootExecute;\Control\Print\Monitors\;\W32Time\TimeProviders\;\Microsoft\NetSh\;\Environment\UserInitMprLogonScript</TargetObject>
+        </Rule>
+        <Rule name="technique_id=T1070.009,technique_name=Clear Persistence" groupRelation="and">
+          <!--Services removed through the service control manager, for example by PsExec or Impacket after lateral movement-->
+          <EventType condition="is">DeleteKey</EventType>
+          <TargetObject condition="contains">\CurrentControlSet\Services\</TargetObject>
+          <Image condition="is">C:\Windows\system32\services.exe</Image>
+        </Rule>
+        <Rule name="technique_id=T1053.005,technique_name=Scheduled Task" groupRelation="and">
+          <!--Scheduled task hidden by deleting its security descriptor (Tarrask)-->
+          <EventType condition="is">DeleteValue</EventType>
+          <TargetObject condition="contains">\Schedule\TaskCache\Tree\</TargetObject>
+          <TargetObject condition="end with">\SD</TargetObject>
+        </Rule>
+        <Rule name="technique_id=T1685,technique_name=Disable or Modify Tools" groupRelation="and">
+          <!--PowerShell logging policy and ETW autologger sessions-->
+          <EventType condition="is any">DeleteKey;DeleteValue;RenameKey</EventType>
+          <TargetObject condition="contains any">\Policies\Microsoft\Windows\PowerShell\;\Control\WMI\Autologger\</TargetObject>
+        </Rule>
+        <Rule name="technique_id=T1685.001,technique_name=Disable or Modify Windows Event Log" groupRelation="and">
+          <!--Event log service and channel configuration-->
+          <EventType condition="is any">DeleteKey;DeleteValue;RenameKey</EventType>
+          <TargetObject condition="contains any">\Services\EventLog\;\WINEVT\Channels\</TargetObject>
+        </Rule>
+      </RegistryEvent>
+    </RuleGroup>
+  </EventFiltering>
+</Sysmon>

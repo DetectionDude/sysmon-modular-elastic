@@ -1,0 +1,108 @@
+# Elastic Defend complement profile: telemetry that Elastic Defend did not record in the lab
+# comparison, plus evidence of Elastic Defend being stopped or tampered with.
+# README.md explains the choice for each event.
+#
+# Paths are relative to the repository root. Upstream modules that this profile leaves out are
+# listed with the reason, next to their event.
+
+# Switchboard: events 2, 8, 9, 17/18, 19-21, and 25 are logged in full, minus the exclusions below.
+# Do not add include modules for these events: one include rule turns an event into an allow-list.
+0_custom_configuration/elastic/modules/complement_base.xml
+
+# Event 2: file creation time changed.
+# Left out: exclude_setups.xml (any image path containing "setup"), and exclude_onedrive.xml and
+# exclude_slack.xml (they match the process name anywhere on disk).
+2_file_create_time/exclude_chrome.xml
+2_file_create_time/exclude_nvidia.xml
+2_file_create_time/exclude_teams.xml
+
+# Event 5: security tools stopping, including Elastic Agent and Elastic Defend.
+5_process_ended/include_security_process_termination.xml
+
+# Event 8: remote threads.
+# Left out: exclude_google_chrome.xml (drops any injection into Chrome).
+# exclude_generic_windows_processes.xml drops csrss.exe as a source, which also hides Ctrl-Inject.
+8_create_remote_thread/exclude_generic_windows_processes.xml
+8_create_remote_thread/exclude_wmi.xml
+
+# Event 10 (provisional): LSASS access only. No credential-access test has been run yet.
+# Left out: exclude_lsass_noise.xml. Its access masks never overlap these includes, and it drops
+# taskmgr.exe by name, which hides LSASS dumps made with Task Manager.
+10_process_access/include_lsass_access.xml
+10_process_access/exclude_elastic.xml
+
+# Event 11: files written into the Elastic folders by other processes.
+11_file_create/include_elastic_sensor_file_tampering.xml
+
+# Events 12-14: deletions and renames of keys of interest, plus Elastic and Sysmon service tampering.
+# Other value changes (Event 13) overlap with Elastic Defend and are left out.
+0_custom_configuration/elastic/modules/12_13_14_registry_event/include_deletions_of_interest.xml
+12_13_14_registry_event/include_elastic_service_tampering.xml
+12_13_14_registry_event/include_sysmon.xml
+12_13_14_registry_event/exclude_elastic.xml
+
+# Event 15: hashes for alternate data streams. No Elastic Defend file event carries a hash.
+15_file_create_stream_hash/include_7zip_extractions.xml
+15_file_create_stream_hash/include_batch_scripts.xml
+15_file_create_stream_hash/include_bin_files.xml
+15_file_create_stream_hash/include_dll_files.xml
+15_file_create_stream_hash/include_exe_files.xml
+15_file_create_stream_hash/include_hta_scripts.xml
+15_file_create_stream_hash/include_html_smuggling.xml
+15_file_create_stream_hash/include_lnk_shortcuts.xml
+15_file_create_stream_hash/include_outlook_attachments.xml
+15_file_create_stream_hash/include_powershell_scripts.xml
+15_file_create_stream_hash/include_registry_file.xml
+15_file_create_stream_hash/include_suspicious_locations.xml
+15_file_create_stream_hash/include_visual_basic_scripts.xml
+
+# Events 17/18: named pipes.
+# Left out: exclude_windows_generic.xml (it also drops \srvsvc, \wkssvc, \lsass, \winreg, and \spoolss),
+# and the modules that exclude by pipe name alone, which an attacker can reuse: exclude_MSSQL.xml,
+# exclude_postgres.xml, exclude_ibm_watson_explorer.xml, and exclude_trend_micro.xml.
+0_custom_configuration/elastic/modules/17_18_pipe_event/exclude_anonymous.xml
+17_18_pipe_event/exclude_adobe.xml
+17_18_pipe_event/exclude_call_manager.xml
+17_18_pipe_event/exclude_citrix.xml
+17_18_pipe_event/exclude_elastic.xml
+17_18_pipe_event/exclude_fireeye_agent.xml
+17_18_pipe_event/exclude_google_chrome.xml
+17_18_pipe_event/exclude_microsoft_edge.xml
+17_18_pipe_event/exclude_microsoft_outlook.xml
+17_18_pipe_event/exclude_microsoft_teams.xml
+17_18_pipe_event/exclude_mozilla_firefox.xml
+17_18_pipe_event/exclude_openssh.xml
+17_18_pipe_event/exclude_qualys_agent.xml
+17_18_pipe_event/exclude_splunk.xml
+
+# Event 25: process tampering.
+# Left out: exclude_unknown_process.xml (any image path containing "unknown process").
+25_process_tampering/exclude_elastic.xml
+25_process_tampering/exclude_firefox.xml
+25_process_tampering/exclude_git.xml
+25_process_tampering/exclude_microsoft_edge.xml
+25_process_tampering/exclude_symantec.xml
+25_process_tampering/exclude_vscode.xml
+25_process_tampering/exclude_wmiadap.xml
+
+# Event 26: hashes for deleted files of interest, and deletions from the Elastic folders.
+26_file_delete_detected/include_elastic_sensor_file_deletion.xml
+26_file_delete_detected/include_event_log_file_deletion.xml
+26_file_delete_detected/include_powershell_transcript_folders.xml
+26_file_delete_detected/include_user_writable_folders.xml
+26_file_delete_detected/include_writable_folders.xml
+
+# Event 29 (provisional): hashes for executables written to disk. Not tested yet.
+# Left out: include_qualys.xml (product specific).
+29_file_executable_detected/include_browser_executable_drops.xml
+29_file_executable_detected/include_living_off_the_land.xml
+29_file_executable_detected/include_msbuild.xml
+29_file_executable_detected/include_msoffice.xml
+29_file_executable_detected/include_shells.xml
+29_file_executable_detected/include_user_writable_folders.xml
+29_file_executable_detected/include_vscode_extension_executables.xml
+29_file_executable_detected/include_windows_remote_management.xml
+29_file_executable_detected/include_writable_folders.xml
+
+# Event 3 (optional): inbound remote-access connections. Enable it where no packet capture runs.
+# 0_custom_configuration/elastic/modules/3_network_connection_initiated/include_inbound_remote_access.xml

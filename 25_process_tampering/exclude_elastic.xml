@@ -1,0 +1,14 @@
+<Sysmon schemaversion="4.50">
+  <EventFiltering>
+    <RuleGroup name="" groupRelation="or">
+      <ProcessTampering onmatch="exclude">
+        <Rule groupRelation="and">
+          <!--Elastic Agent, installed in a versioned folder: benign "Image is replaced" records-->
+          <Image condition="begin with">C:\Program Files\Elastic\Agent\data\elastic-agent-</Image>
+          <Image condition="end with">\elastic-agent.exe</Image>
+          <Type condition="is">Image is replaced</Type>
+        </Rule>
+      </ProcessTampering>
+    </RuleGroup>
+  </EventFiltering>
+</Sysmon>

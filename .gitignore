@@ -8,4 +8,5 @@
 !0_custom_configuration/example_exclude_rules.txt
 !0_custom_configuration/mde_covered_modules.txt
 !0_custom_configuration/generate-sysmonconfig-mde-augment.sh
+!0_custom_configuration/elastic/
 /outputs/
