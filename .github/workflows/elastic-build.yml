@@ -1,0 +1,84 @@
+name: Build Elastic Defend profiles
+
+on:
+  pull_request:
+    branches: [elastic]
+  push:
+    branches: [elastic]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: elastic-profiles-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Generate and validate profiles
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: tooling/go.mod
+          cache-dependency-path: tooling/go.mod
+
+      - name: Build sysmon-modular
+        run: go -C tooling build -o sysmon-modular ./cmd/sysmon-modular
+
+      - name: Generate and validate profiles
+        run: ./0_custom_configuration/elastic/generate-sysmonconfig-elastic.sh release
+
+      - name: Record checksums
+        run: |
+          cd release
+          sha256sum -- *.xml > SHA256SUMS
+          sha256sum --check SHA256SUMS
+
+      - name: Upload profiles
+        uses: actions/upload-artifact@v4
+        with:
+          name: elastic-profiles-${{ github.sha }}
+          path: release/
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish profiles to GitHub Releases
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/elastic'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download profiles
+        uses: actions/download-artifact@v4
+        with:
+          name: elastic-profiles-${{ github.sha }}
+          path: release
+
+      - name: Verify checksums
+        run: |
+          cd release
+          sha256sum --check SHA256SUMS
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tag="elastic-${GITHUB_SHA::12}"
+          title="Elastic Defend profiles (${GITHUB_SHA::12})"
+          notes="Research and complement Sysmon profiles for hosts running Elastic Defend, generated from commit ${GITHUB_SHA} for Sysmon 15.21 and later."
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists; nothing to publish."
+          else
+            gh release create "$tag" release/* \
+              --target "$GITHUB_SHA" --title "$title" --notes "$notes" --latest
+          fi
