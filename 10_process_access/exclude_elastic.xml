@@ -3,6 +3,11 @@
     <RuleGroup name="" groupRelation="or">
       <ProcessAccess onmatch="exclude">
         <SourceImage condition="contains all">C:\Program Files\Elastic\Agent\data\;\metricbeat.exe</SourceImage> <!--Very Noisy-->
+        <SourceImage condition="is">C:\Program Files\Elastic\Endpoint\elastic-endpoint.exe</SourceImage> <!--Elastic Defend-->
+        <Rule groupRelation="and">
+          <SourceImage condition="begin with">C:\Program Files\Elastic\Agent\data\elastic-agent-</SourceImage>
+          <SourceImage condition="end with">\components\elastic-otel-collector.exe</SourceImage>
+        </Rule>
       </ProcessAccess>
     </RuleGroup>
   </EventFiltering>
