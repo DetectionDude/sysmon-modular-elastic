@@ -1,0 +1,13 @@
+<Sysmon schemaversion="4.30">
+  <EventFiltering>
+    <RuleGroup name="technique_id=T1685,technique_name=Disable or Modify Tools" groupRelation="or">
+      <FileCreate onmatch="include">
+        <Rule groupRelation="and">
+          <!--Files written into the Elastic Agent or Elastic Defend folders by anything other than Elastic itself-->
+          <TargetFilename condition="begin with">C:\Program Files\Elastic\</TargetFilename>
+          <Image condition="excludes">C:\Program Files\Elastic\</Image>
+        </Rule>
+      </FileCreate>
+    </RuleGroup>
+  </EventFiltering>
+</Sysmon>

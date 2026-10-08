@@ -1,0 +1,16 @@
+<Sysmon schemaversion="4.30">
+  <EventFiltering>
+    <RuleGroup name="technique_id=T1685,technique_name=Disable or Modify Tools" groupRelation="or">
+      <RegistryEvent onmatch="include">
+        <Rule groupRelation="and">
+          <!--Changes to the Elastic Agent and Elastic Defend service and driver keys by anything other than Elastic itself.
+              Matches every service whose name starts with Elastic. services.exe stays in scope because sc.exe and the
+              service control API write through it. CreateKey is left out because opening a key can also produce it-->
+          <TargetObject condition="contains">\Services\Elastic</TargetObject>
+          <EventType condition="is any">SetValue;DeleteKey;DeleteValue;RenameKey</EventType>
+          <Image condition="excludes">C:\Program Files\Elastic\</Image>
+        </Rule>
+      </RegistryEvent>
+    </RuleGroup>
+  </EventFiltering>
+</Sysmon>
