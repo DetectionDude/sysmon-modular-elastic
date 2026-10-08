@@ -3,26 +3,63 @@
     <RuleGroup name="" groupRelation="or">
       <ProcessAccess onmatch="include">
         <!-- In some environments this causes HIGH CPU usage by sysmon, remove this module when that occurs -->
-        <Rule groupRelation="and">
-          <TargetImage name="technique_id=T1003,technique_name=OS Credential Dumping" condition="is">C:\Windows\system32\lsass.exe</TargetImage>          <!--Mitre T1098-->          <!--Mitre T1550.002-->          <!--Mitre T1003-->          <!-- depending on what you're running on your host, this might be noisy-->
-          <GrantedAccess>0x1FFFFF</GrantedAccess>          <!--Expect EDRs/AVs to also trigger this-->
+        <!--LSASS opened with a right to read its memory (PROCESS_VM_READ, 0x10). Sysmon compares GrantedAccess as text, so
+            each mask is listed. 0x1410 is the minimum for MiniDumpWriteDump: PROCESS_QUERY_INFORMATION and PROCESS_VM_READ, 
+            plus PROCESS_QUERY_LIMITED_INFORMATION, which Windows adds. A dump with handle data also needs 
+            PROCESS_DUP_HANDLE (0x1450). Security agents that read LSASS need an exclusion by full path-->
+        <Rule name="technique_id=T1003.001,technique_name=LSASS Memory" groupRelation="and">
+          <TargetImage condition="is">C:\Windows\System32\lsass.exe</TargetImage>
+          <GrantedAccess condition="is">0x1010</GrantedAccess>
         </Rule>
-        <Rule groupRelation="and">
-          <TargetImage name="technique_id=T1003,technique_name=OS Credential Dumping" condition="is">C:\Windows\system32\lsass.exe</TargetImage>          <!--Mitre T1098-->          <!--Mitre T1550.002-->          <!--Mitre T1003-->          <!-- depending on what you're running on your host, this might be noisy-->
-          <GrantedAccess>0x1F1FFF</GrantedAccess>
+        <Rule name="technique_id=T1003.001,technique_name=LSASS Memory" groupRelation="and">
+          <TargetImage condition="is">C:\Windows\System32\lsass.exe</TargetImage>
+          <GrantedAccess condition="is">0x1038</GrantedAccess>
         </Rule>
-        <Rule groupRelation="and">
-          <TargetImage name="technique_id=T1003,technique_name=OS Credential Dumping" condition="is">C:\Windows\system32\lsass.exe</TargetImage>          <!--Mitre T1098-->          <!--Mitre T1550.002-->          <!--Mitre T1003-->          <!-- depending on what you're running on your host, this might be noisy-->
-          <GrantedAccess>0x1010</GrantedAccess>
+        <Rule name="technique_id=T1003.001,technique_name=LSASS Memory" groupRelation="and">
+          <TargetImage condition="is">C:\Windows\System32\lsass.exe</TargetImage>
+          <GrantedAccess condition="is">0x1410</GrantedAccess>
         </Rule>
-        <Rule groupRelation="and">
-          <TargetImage name="technique_id=T1003,technique_name=OS Credential Dumping" condition="is">C:\Windows\system32\lsass.exe</TargetImage>          <!--Mitre T1098-->          <!--Mitre T1550.002-->          <!--Mitre T1003-->          <!-- depending on what you're running on your host, this might be noisy-->
-          <GrantedAccess>0x143A</GrantedAccess>
+        <Rule name="technique_id=T1003.001,technique_name=LSASS Memory" groupRelation="and">
+          <TargetImage condition="is">C:\Windows\System32\lsass.exe</TargetImage>
+          <GrantedAccess condition="is">0x1418</GrantedAccess>
         </Rule>
-        <Rule groupRelation="and">
-          <TargetImage name="technique_id=T1003,technique_name=OS Credential Dumping" condition="image">lsass.exe</TargetImage>          <!--https://pentestlab.blog/2018/05/15/lateral-movement-winrm/-->
-          <SourceImage name="technique_id=T1003,technique_name=OS Credential Dumping" condition="image">wsmprovhost.exe</SourceImage>
-        </Rule>        
+        <Rule name="technique_id=T1003.001,technique_name=LSASS Memory" groupRelation="and">
+          <TargetImage condition="is">C:\Windows\System32\lsass.exe</TargetImage>
+          <GrantedAccess condition="is">0x1438</GrantedAccess>
+        </Rule>
+        <Rule name="technique_id=T1003.001,technique_name=LSASS Memory" groupRelation="and">
+          <TargetImage condition="is">C:\Windows\System32\lsass.exe</TargetImage>
+          <GrantedAccess condition="is">0x143A</GrantedAccess>
+        </Rule>
+        <Rule name="technique_id=T1003.001,technique_name=LSASS Memory" groupRelation="and">
+          <TargetImage condition="is">C:\Windows\System32\lsass.exe</TargetImage>
+          <GrantedAccess condition="is">0x1450</GrantedAccess>
+        </Rule>
+        <Rule name="technique_id=T1003.001,technique_name=LSASS Memory" groupRelation="and">
+          <TargetImage condition="is">C:\Windows\System32\lsass.exe</TargetImage>
+          <GrantedAccess condition="is">0x1F0FFF</GrantedAccess>
+        </Rule>
+        <Rule name="technique_id=T1003.001,technique_name=LSASS Memory" groupRelation="and">
+          <TargetImage condition="is">C:\Windows\System32\lsass.exe</TargetImage>
+          <GrantedAccess condition="is">0x1F1FFF</GrantedAccess>
+        </Rule>
+        <Rule name="technique_id=T1003.001,technique_name=LSASS Memory" groupRelation="and">
+          <TargetImage condition="is">C:\Windows\System32\lsass.exe</TargetImage>
+          <GrantedAccess condition="is">0x1F2FFF</GrantedAccess>
+        </Rule>
+        <Rule name="technique_id=T1003.001,technique_name=LSASS Memory" groupRelation="and">
+          <TargetImage condition="is">C:\Windows\System32\lsass.exe</TargetImage>
+          <GrantedAccess condition="is">0x1F3FFF</GrantedAccess>
+        </Rule>
+        <Rule name="technique_id=T1003.001,technique_name=LSASS Memory" groupRelation="and">
+          <TargetImage condition="is">C:\Windows\System32\lsass.exe</TargetImage>
+          <GrantedAccess condition="is">0x1FFFFF</GrantedAccess>
+        </Rule>
+        <Rule name="technique_id=T1003.001,technique_name=LSASS Memory" groupRelation="and">
+          <!--Any access from a remote PowerShell session, whatever the mask: https://pentestlab.blog/2018/05/15/lateral-movement-winrm/-->
+          <TargetImage condition="is">C:\Windows\System32\lsass.exe</TargetImage>
+          <SourceImage condition="image">wsmprovhost.exe</SourceImage>
+        </Rule>
       </ProcessAccess>
     </RuleGroup>
   </EventFiltering>
