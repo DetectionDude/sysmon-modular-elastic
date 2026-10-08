@@ -1,0 +1,21 @@
+<Sysmon schemaversion="4.30">
+  <EventFiltering>
+    <RuleGroup name="" groupRelation="or">
+      <PipeEvent onmatch="exclude">
+        <!--Windows PowerShell creates a \PSHost.<time>.<pid>.DefaultAppDomain.powershell pipe in every process it starts.
+            A \PSHost pipe in any other process is still logged: include_powershell.xml flags it as PowerShell running
+            inside that process-->
+        <Rule groupRelation="and">
+          <Image condition="is">C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe</Image>
+          <PipeName condition="begin with">\PSHost.</PipeName>
+          <PipeName condition="end with">.powershell</PipeName>
+        </Rule>
+        <Rule groupRelation="and">
+          <Image condition="is">C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe</Image>
+          <PipeName condition="begin with">\PSHost.</PipeName>
+          <PipeName condition="end with">.powershell</PipeName>
+        </Rule>
+      </PipeEvent>
+    </RuleGroup>
+  </EventFiltering>
+</Sysmon>
