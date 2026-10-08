@@ -2,11 +2,17 @@
   <EventFiltering>
     <RuleGroup name="technique_id=T1685,technique_name=Disable or Modify Tools" groupRelation="or">
       <ProcessTerminate onmatch="include">
+        <!--Security tools stopping. Pairs with 1_process_creation/include_security_process_creation.xml, so keep both lists in sync-->
         <Image condition="image">MsMpEng.exe</Image>
         <Image condition="image">MsSense.exe</Image>
         <Image condition="image">SenseIR.exe</Image>
         <Image condition="image">SenseNdr.exe</Image>
         <Image condition="image">SecurityHealthService.exe</Image>
+        <Image condition="image">elastic-endpoint.exe</Image>
+        <Image condition="image">elastic-agent.exe</Image>
+        <Image condition="image">elastic-otel-collector.exe</Image>
+        <Image condition="image">endpoint-security.exe</Image>
+        <Image condition="image">agentbeat.exe</Image>
         <Image condition="image">Sysmon.exe</Image>
         <Image condition="image">Sysmon64.exe</Image>
       </ProcessTerminate>
