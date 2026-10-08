@@ -1,4 +1,4 @@
-# sysmon-modular-elastic | A Sysmon configuration repository for everybody to customise
+# sysmon-modular-elastic
 
 This project is forked from Olaf Hartong's original [sysmon-modular](https://github.com/olafhartong/sysmon-modular). 
 
