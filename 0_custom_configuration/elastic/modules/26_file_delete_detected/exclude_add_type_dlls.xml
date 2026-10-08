@@ -1,0 +1,32 @@
+<Sysmon schemaversion="4.60">
+  <EventFiltering>
+    <RuleGroup name="" groupRelation="or">
+      <FileDeleteDetected onmatch="exclude">
+        <!--DLLs deleted from the user's Temp folder by PowerShell or the C# compiler. PowerShell's Add-Type leaves one per
+            compile, deleted once by csc.exe and once by powershell.exe: 2,686 records in 6.6 hours on the lab host. Event 29
+            already records the hash of any executable written to the user's Temp folder, and Elastic Defend has no library
+            record for these DLLs. That makes this exclusion safe only alongside Event 29 logging, which needs Sysmon 15-->
+        <Rule groupRelation="and">
+          <Image condition="is">C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe</Image>
+          <TargetFilename condition="contains">\AppData\Local\Temp\</TargetFilename>
+          <TargetFilename condition="end with">.dll</TargetFilename>
+        </Rule>
+        <Rule groupRelation="and">
+          <Image condition="is">C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe</Image>
+          <TargetFilename condition="contains">\AppData\Local\Temp\</TargetFilename>
+          <TargetFilename condition="end with">.dll</TargetFilename>
+        </Rule>
+        <Rule groupRelation="and">
+          <Image condition="is">C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe</Image>
+          <TargetFilename condition="contains">\AppData\Local\Temp\</TargetFilename>
+          <TargetFilename condition="end with">.dll</TargetFilename>
+        </Rule>
+        <Rule groupRelation="and">
+          <Image condition="is">C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe</Image>
+          <TargetFilename condition="contains">\AppData\Local\Temp\</TargetFilename>
+          <TargetFilename condition="end with">.dll</TargetFilename>
+        </Rule>
+      </FileDeleteDetected>
+    </RuleGroup>
+  </EventFiltering>
+</Sysmon>

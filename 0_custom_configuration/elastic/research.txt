@@ -9,7 +9,7 @@
 
 3_network_connection_initiated/exclude_elastic.xml
 10_process_access/exclude_elastic.xml
+10_process_access/exclude_query_only_access.xml
 11_file_create/exclude_elastic_logs.xml
 12_13_14_registry_event/exclude_elastic.xml
 17_18_pipe_event/exclude_elastic.xml
-25_process_tampering/exclude_elastic.xml

@@ -1,17 +1,18 @@
 <Sysmon schemaversion="4.90">
   <!--Base of the Elastic Defend research profile: every event is logged, except FileDelete archiving (23) and
       the FileBlockExecutable and FileBlockShredding prevention events (27, 28).
-      The exclusions come from the repository's former sysmonconfig-research.xml (removed in 0cefc18), with three changes:
-      - No powershell.exe RegistryEvent exclusion. It hid every PowerShell registry change from the research profile.
+      It starts from the repository's former sysmonconfig-research.xml (removed in 0cefc18), with these changes:
+      - The powershell.exe RegistryEvent exclusion covers only CreateKey. The old exclusion hid every PowerShell registry change;
+        in the October 7 test, CreateKey made 516,117 of PowerShell's 516,717 registry events, mostly certificate-store key opens.
+      - No Splunk, Azure guest agent, Microsoft Monitoring Agent, or C:\Tools exclusions. None of those products ran in
+        the lab, and a standard user can create C:\WindowsAzure\GuestAgent* or C:\Tools\Sysinternals\ where they don't exist.
       - Prevention is switched off with empty include filters, as in the Detection Lab derivative of that file.
       - FileExecutableDetected (29) is logged on Sysmon 15.
-      The Elastic Agent and Elastic Defend exclusions come from the exclude_elastic*.xml modules listed in research.txt.-->
+      The Elastic Agent and Elastic Defend exclusions, and the query-only process access exclusion, come from the modules
+      listed in research.txt.-->
   <EventFiltering>
     <RuleGroup name="" groupRelation="or">
-      <ProcessCreate onmatch="exclude">
-        <Image condition="begin with">C:\Program Files\SplunkUniversalForwarder\bin\</Image>
-        <Image condition="begin with">C:\WindowsAzure\GuestAgent</Image>
-      </ProcessCreate>
+      <ProcessCreate onmatch="exclude"/>
     </RuleGroup>
     <RuleGroup name="" groupRelation="or">
       <FileCreateTime onmatch="exclude"/>
@@ -20,20 +21,13 @@
       <NetworkConnect onmatch="exclude"/>
     </RuleGroup>
     <RuleGroup name="" groupRelation="or">
-      <ProcessTerminate onmatch="exclude">
-        <Image condition="begin with">C:\Program Files\SplunkUniversalForwarder\bin\</Image>
-        <Image condition="begin with">C:\WindowsAzure\GuestAgent</Image>
-      </ProcessTerminate>
+      <ProcessTerminate onmatch="exclude"/>
     </RuleGroup>
     <RuleGroup name="" groupRelation="or">
       <DriverLoad onmatch="exclude"/>
     </RuleGroup>
     <RuleGroup name="" groupRelation="or">
-      <ImageLoad onmatch="exclude">
-        <Image condition="is">C:\Tools\Sysinternals\Sysmon64.exe</Image>
-        <Image condition="begin with">C:\Program Files\SplunkUniversalForwarder\bin\</Image>
-        <Image condition="begin with">C:\WindowsAzure\GuestAgent</Image>
-      </ImageLoad>
+      <ImageLoad onmatch="exclude"/>
     </RuleGroup>
     <RuleGroup name="" groupRelation="or">
       <CreateRemoteThread onmatch="exclude"/>
@@ -45,8 +39,6 @@
       <ProcessAccess onmatch="exclude">
         <SourceImage condition="is">C:\windows\system32\csrss.exe</SourceImage>
         <SourceImage condition="is">C:\windows\system32\lsass.exe</SourceImage>
-        <SourceImage condition="is">C:\Program Files\Microsoft Monitoring Agent\Agent\HealthService.exe</SourceImage>
-        <SourceImage condition="begin with">C:\Program Files\SplunkUniversalForwarder\bin\</SourceImage>
       </ProcessAccess>
     </RuleGroup>
     <RuleGroup name="" groupRelation="or">
@@ -54,22 +46,23 @@
     </RuleGroup>
     <RuleGroup name="" groupRelation="or">
       <RegistryEvent onmatch="exclude">
-        <Image condition="begin with">C:\Program Files\SplunkUniversalForwarder\bin\</Image>
-        <Image condition="is">C:\Program Files\Microsoft Monitoring Agent\Agent\HealthService.exe</Image>
-        <Image condition="is">C:\tools\sysinternals\Sysmon64.exe</Image>
         <Image condition="is">C:\windows\Sysmon64.exe</Image>
-        <Image condition="begin with">C:\WindowsAzure\GuestAgent</Image>
+        <Rule groupRelation="and">
+          <!--PowerShell opening registry keys, which Sysmon reports as CreateKey. Its value changes and deletions are still logged-->
+          <Image condition="is">C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe</Image>
+          <EventType condition="is">CreateKey</EventType>
+        </Rule>
+        <Rule groupRelation="and">
+          <Image condition="is">C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe</Image>
+          <EventType condition="is">CreateKey</EventType>
+        </Rule>
       </RegistryEvent>
     </RuleGroup>
     <RuleGroup name="" groupRelation="or">
       <FileCreateStreamHash onmatch="exclude"/>
     </RuleGroup>
     <RuleGroup name="" groupRelation="or">
-      <PipeEvent onmatch="exclude">
-        <Image condition="begin with">C:\Program Files\SplunkUniversalForwarder\bin\</Image>
-        <Image condition="begin with">C:\Program Files\Microsoft Monitoring Agent\Agent\</Image>
-        <Image condition="begin with">C:\WindowsAzure\GuestAgent</Image>
-      </PipeEvent>
+      <PipeEvent onmatch="exclude"/>
     </RuleGroup>
     <RuleGroup name="" groupRelation="or">
       <WmiEvent onmatch="exclude"/>

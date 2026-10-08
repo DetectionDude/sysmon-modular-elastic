@@ -3,13 +3,19 @@
 # README.md explains the choice for each event.
 #
 # Paths are relative to the repository root. Upstream modules that this profile leaves out are
-# listed with the reason, next to their event. Exclusions are kept only when they are anchored to a
-# path that a standard user cannot create.
+# listed with the reason, next to their event. Exclusions are kept only when an attacker can't
+# satisfy them without administrator rights.
 
-# Switchboard: events 2, 8, 9, 17/18, 19-21, and 25 are logged in full, minus the exclusions below.
-# Do not add include modules for these events: one include rule turns an event into an allow-list.
-# Events 1, 3, 6, 7, 22, 23, 24, 27, and 28 are switched off.
+# Switchboard: every event gets an explicit filter. Events 2, 6, 8, 9, 17/18, 19-21, and 25 are
+# logged in full, minus the exclusions below. Do not add include modules for these events: one
+# include rule turns an event into an allow-list. All other events log only what the include
+# modules below select.
 0_custom_configuration/elastic/modules/complement_base.xml
+
+# Event 1: security tools starting or restarting, the partner of the Event 5 module. Elastic Defend
+# reported only five elastic-endpoint.exe process records across both lab hosts all day, while Sysmon
+# logged 105 starts on one. About 134 records a day on the lab host.
+1_process_creation/include_security_process_creation.xml
 
 # Event 2: file creation time changed. Logged in full: 91 records a day in the lab.
 # Left out: every upstream exclusion. Each one matches a process name, a path suffix, or a folder
@@ -19,26 +25,40 @@
 # Event 5: security tools stopping, including Elastic Agent, its collector, and Elastic Defend.
 5_process_ended/include_security_process_termination.xml
 
-# Event 8: remote threads. 8 records a day in the lab.
-# Left out: exclude_generic_windows_processes.xml (drops svchost.exe, services.exe, winlogon.exe, and
-# csrss.exe as sources, which also hides Ctrl-Inject) and exclude_google_chrome.xml (drops any
-# injection into Chrome).
-8_create_remote_thread/exclude_wmi.xml
+# Event 6: driver loads. Logged in full: 3 records a day in the lab. Attackers load vulnerable signed
+# drivers to stop security tools, and nobody has checked whether Elastic Defend records driver loads.
+# Left out: exclude_intel_drivers.xml and exclude_microsoft_drivers.xml. They trust drivers by
+# signer, but Intel's iqvw64e.sys is a well-known vulnerable driver, and many third-party drivers
+# carry a Microsoft hardware-compatibility signature.
 
-# Event 10 (provisional): LSASS access only. No credential-access test has been run yet.
-# Left out: exclude_lsass_noise.xml. Its access masks never overlap these includes, and it drops
-# taskmgr.exe by name, which hides LSASS dumps made with Task Manager.
-10_process_access/include_lsass_access.xml
+# Event 8: remote threads. Logged in full: 8 records a day in the lab.
+# Left out: every upstream exclusion. exclude_generic_windows_processes.xml drops svchost.exe,
+# services.exe, winlogon.exe, and csrss.exe as sources, which also hides Ctrl-Inject.
+# exclude_wmi.xml drops threads started from WmiPrvSE.exe, and exclude_google_chrome.xml drops any
+# injection into Chrome. None of them removed anything in the lab.
+
+# Event 10 (provisional): every LSASS open except the query-only masks, which can't read memory.
+# A list of read masks would miss any mask it doesn't name. In the lab this logged 13 records a day,
+# all wmiprvse.exe with 0x1410. No credential-access test has been run yet, and Elastic Defend's
+# credential hardening was off in the lab comparison. Keep exclude_elastic.xml: Elastic Defend made
+# 637,803 Event 10 records before the lab's own exclusion took effect.
+# Left out: include_lsass_access.xml, which lists read masks, and exclude_lsass_noise.xml, which drops
+# taskmgr.exe by name and so hides LSASS dumps made with Task Manager.
+0_custom_configuration/elastic/modules/10_process_access/include_lsass_access_all.xml
+10_process_access/exclude_query_only_access.xml
 10_process_access/exclude_elastic.xml
 
 # Event 11: files written into the Elastic folders by other processes.
 11_file_create/include_elastic_sensor_file_tampering.xml
 
-# Events 12-14: deletions and renames of keys of interest, plus Elastic and Sysmon service tampering.
-# Other value changes (Event 13) are left out because Elastic Defend recorded the one tested value
-# change. That rests on a single test; README.md lists the comparison that would check it.
+# Events 12-14: deletions and renames of keys of interest, value changes that switch off ETW autologger
+# sessions, event log channels, or the Event Log service, changes to an event log's maximum size or
+# retention, and Elastic and Sysmon service tampering. Other value changes (Event 13) are left to
+# Elastic Defend, which records them only for keys it watches: 1,840 on one lab host against
+# Sysmon's 43,658. README.md lists how to check each family.
 0_custom_configuration/elastic/modules/12_13_14_registry_event/include_deletions_of_interest.xml
 12_13_14_registry_event/include_elastic_service_tampering.xml
+12_13_14_registry_event/include_eventlog.xml
 12_13_14_registry_event/include_sysmon.xml
 12_13_14_registry_event/exclude_elastic.xml
 
@@ -71,30 +91,37 @@
 # - exclude_call_manager.xml, exclude_citrix.xml, and exclude_microsoft_teams.xml: match programs
 #   in user profiles. exclude_citrix.xml drops every pipe from them.
 # - exclude_splunk.xml: an unanchored "end with" path.
-# - exclude_azure_sentinel_agent.xml and exclude_qlik_sense.xml: their "is" values are quoted or
-#   relative, so they never match.
+# - exclude_azure_sentinel_agent.xml and exclude_qlik_sense.xml: products that weren't in the lab.
+# exclude_powershell_pshost.xml drops the \PSHost pipe that powershell.exe creates in itself: 2,755 of
+# the 3,192 pipe records in 6.6 hours of the October 7 test. A \PSHost pipe in any other process is
+# still logged.
 0_custom_configuration/elastic/modules/17_18_pipe_event/exclude_anonymous.xml
 17_18_pipe_event/exclude_elastic.xml
 17_18_pipe_event/exclude_openssh.xml
+17_18_pipe_event/exclude_powershell_pshost.xml
 
-# Event 25: process tampering.
-# Left out: exclude_unknown_process.xml (any image path containing "unknown process").
-25_process_tampering/exclude_elastic.xml
-25_process_tampering/exclude_firefox.xml
-25_process_tampering/exclude_git.xml
-25_process_tampering/exclude_microsoft_edge.xml
-25_process_tampering/exclude_symantec.xml
-25_process_tampering/exclude_vscode.xml
-25_process_tampering/exclude_wmiadap.xml
+# Event 25: process tampering. Logged in full: 7 records a day in the lab, 5 of them from Elastic Agent.
+# Left out: every upstream exclusion. Event 25 reports the image of the process that was tampered
+# with, and any user can start a legitimate program such as WMIADAP.exe or msedge.exe and replace its
+# image, so excluding an image hides that program's hollowing. That applies to exclude_elastic.xml,
+# exclude_firefox.xml, exclude_git.xml, exclude_microsoft_edge.xml, exclude_symantec.xml,
+# exclude_unknown_process.xml, exclude_vscode.xml, and exclude_wmiadap.xml.
 
-# Event 26: hashes for deleted files of interest, and deletions from the Elastic folders.
+# Event 26: hashes for deleted files of interest, and deletions from the Elastic folders, minus the
+# temporary files that PowerShell writes at every start and at every Add-Type compile.
+# exclude_add_type_dlls.xml drops the compiled DLLs (2,686 records in 6.6 hours of the October 7
+# test); Event 29 already records each one's hash when it is written.
 26_file_delete_detected/include_elastic_sensor_file_deletion.xml
 26_file_delete_detected/include_event_log_file_deletion.xml
 26_file_delete_detected/include_powershell_transcript_folders.xml
 26_file_delete_detected/include_user_writable_folders.xml
 26_file_delete_detected/include_writable_folders.xml
+26_file_delete_detected/exclude_powershell_temp_files.xml
+0_custom_configuration/elastic/modules/26_file_delete_detected/exclude_add_type_dlls.xml
 
 # Event 29 (provisional): hashes for executables written to disk. Not tested yet.
+# include_living_off_the_land.xml also matches csc.exe, once per PowerShell Add-Type compile, and
+# msiexec.exe, for every executable an installer writes. Measure both in the rerun.
 # Left out: include_qualys.xml (product specific).
 29_file_executable_detected/include_browser_executable_drops.xml
 29_file_executable_detected/include_living_off_the_land.xml

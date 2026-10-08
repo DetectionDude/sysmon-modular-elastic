@@ -2,14 +2,15 @@
   <EventFiltering>
     <RuleGroup name="" groupRelation="or">
       <RegistryEvent onmatch="include">
-        <!--Deletions and renames only. Elastic Defend recorded no registry deletion on either lab host. It recorded the
-            tested value change, so value changes (Event 13) are left to Elastic Defend.
+        <!--Mostly deletions and renames. Elastic Defend recorded no registry deletion on either lab host, and it records value
+            changes (Event 13) only for keys it watches. Value changes are left to it, except on the keys that keep the
+            logging pipeline running: ETW autologger sessions, event log channels, and the Event Log service's Start value.
             Key-level volume is unknown: lsass.exe and svchost.exe deleted thousands of keys and values a day on the lab
             host, so LSA and per-logon keys are deliberately not listed here-->
         <Rule name="technique_id=T1070.009,technique_name=Clear Persistence" groupRelation="and">
-          <!--Autostart locations-->
+          <!--Autostart locations. The trailing backslashes keep \CurrentVersion\Run from also matching RunNotification-->
           <EventType condition="is any">DeleteKey;DeleteValue;RenameKey</EventType>
-          <TargetObject condition="contains any">\CurrentVersion\Run;\Policies\Explorer\Run;\Winlogon\Shell;\Winlogon\Userinit;\Winlogon\Notify;\Image File Execution Options\;\SilentProcessExit\;\CurrentVersion\Windows\AppInit_DLLs;\Session Manager\AppCertDlls;\Session Manager\BootExecute;\Control\Print\Monitors\;\W32Time\TimeProviders\;\Microsoft\NetSh\;\Environment\UserInitMprLogonScript</TargetObject>
+          <TargetObject condition="contains any">\CurrentVersion\Run\;\CurrentVersion\RunOnce\;\CurrentVersion\RunOnceEx\;\CurrentVersion\RunServices\;\CurrentVersion\RunServicesOnce\;\Policies\Explorer\Run\;\Winlogon\Shell;\Winlogon\Userinit;\Winlogon\Notify;\Image File Execution Options\;\SilentProcessExit\;\CurrentVersion\Windows\AppInit_DLLs;\Session Manager\AppCertDlls;\Session Manager\BootExecute;\Control\Print\Monitors\;\W32Time\TimeProviders\;\Microsoft\NetSh\;\Environment\UserInitMprLogonScript</TargetObject>
         </Rule>
         <Rule name="technique_id=T1070.009,technique_name=Clear Persistence" groupRelation="and">
           <!--Services removed through the service control manager, for example by PsExec or Impacket after lateral movement-->
@@ -24,14 +25,27 @@
           <TargetObject condition="end with">\SD</TargetObject>
         </Rule>
         <Rule name="technique_id=T1685,technique_name=Disable or Modify Tools" groupRelation="and">
-          <!--PowerShell logging policy and ETW autologger sessions-->
+          <!--PowerShell logging policy. Value changes are left to Elastic Defend: Elastic's rule for disabled script block
+              logging reads its registry data-->
           <EventType condition="is any">DeleteKey;DeleteValue;RenameKey</EventType>
-          <TargetObject condition="contains any">\Policies\Microsoft\Windows\PowerShell\;\Control\WMI\Autologger\</TargetObject>
+          <TargetObject condition="contains">\Policies\Microsoft\Windows\PowerShell\</TargetObject>
+        </Rule>
+        <Rule name="technique_id=T1685,technique_name=Disable or Modify Tools" groupRelation="and">
+          <!--ETW autologger sessions, including value changes: setting Start or Enabled to 0 switches a session off. The
+              EventLog-* sessions feed the event log channels-->
+          <EventType condition="is any">SetValue;DeleteKey;DeleteValue;RenameKey</EventType>
+          <TargetObject condition="contains">\Control\WMI\Autologger\</TargetObject>
         </Rule>
         <Rule name="technique_id=T1685.001,technique_name=Disable or Modify Windows Event Log" groupRelation="and">
-          <!--Event log service and channel configuration-->
+          <!--Event Log service configuration-->
           <EventType condition="is any">DeleteKey;DeleteValue;RenameKey</EventType>
-          <TargetObject condition="contains any">\Services\EventLog\;\WINEVT\Channels\</TargetObject>
+          <TargetObject condition="contains">\Services\EventLog\</TargetObject>
+        </Rule>
+        <Rule name="technique_id=T1685.001,technique_name=Disable or Modify Windows Event Log" groupRelation="and">
+          <!--Event log channels and the Event Log service's Start value, including value changes. Sysmon writes to one of these
+              channels and Elastic Agent reads from them, so switching one off should not depend on another sensor-->
+          <EventType condition="is any">SetValue;DeleteKey;DeleteValue;RenameKey</EventType>
+          <TargetObject condition="contains any">\WINEVT\Channels\;\Services\EventLog\Start</TargetObject>
         </Rule>
       </RegistryEvent>
     </RuleGroup>
