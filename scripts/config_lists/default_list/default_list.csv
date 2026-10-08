@@ -46,6 +46,7 @@ filepath,priority
 10_process_access/exclude_microsoft_onedrive.xml,10
 10_process_access/exclude_microsoft_teams.xml,10
 10_process_access/exclude_microsoft_windows_defender.xml,10
+10_process_access/exclude_query_only_access.xml,10
 10_process_access/exclude_sccm.xml,10
 10_process_access/exclude_winzip.xml,10
 10_process_access/include_debugging.xml,10
