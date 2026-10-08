@@ -1,0 +1,13 @@
+<Sysmon schemaversion="4.30">
+  <EventFiltering>
+    <RuleGroup name="" groupRelation="or">
+      <PipeEvent onmatch="exclude">
+        <Rule groupRelation="and">
+          <!--Windows OpenSSH server: pipes for its POSIX pipe emulation, several per session-->
+          <Image condition="is">C:\Windows\System32\OpenSSH\sshd.exe</Image>
+          <PipeName condition="begin with">\W32PosixPipe.</PipeName>
+        </Rule>
+      </PipeEvent>
+    </RuleGroup>
+  </EventFiltering>
+</Sysmon>
