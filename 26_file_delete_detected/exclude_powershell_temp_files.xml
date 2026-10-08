@@ -1,0 +1,24 @@
+<Sysmon schemaversion="4.60">
+  <EventFiltering>
+    <RuleGroup name="" groupRelation="or">
+      <FileDeleteDetected onmatch="exclude">
+        <!--Windows PowerShell writes and deletes __PSScriptPolicyTest_*.ps1 and .psm1 files in the user's Temp folder at every
+            start, to test the script execution policy-->
+        <Rule groupRelation="and">
+          <Image condition="is">C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe</Image>
+          <TargetFilename condition="contains">\AppData\Local\Temp\__PSScriptPolicyTest_</TargetFilename>
+        </Rule>
+        <Rule groupRelation="and">
+          <Image condition="is">C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe</Image>
+          <TargetFilename condition="contains">\AppData\Local\Temp\__PSScriptPolicyTest_</TargetFilename>
+        </Rule>
+        <Rule groupRelation="and">
+          <!--Compiler argument files that PowerShell's Add-Type leaves at every compile. include_user_writable_folders.xml
+              matches them only because ".cmdline" contains ".cmd"-->
+          <TargetFilename condition="contains">\AppData\Local\Temp\</TargetFilename>
+          <TargetFilename condition="end with">.cmdline</TargetFilename>
+        </Rule>
+      </FileDeleteDetected>
+    </RuleGroup>
+  </EventFiltering>
+</Sysmon>
