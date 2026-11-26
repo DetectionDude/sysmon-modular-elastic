@@ -1,4 +1,4 @@
-name: Build Elastic Defend profiles
+name: Build Elastic profiles
 
 on:
   pull_request:
@@ -73,8 +73,8 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           tag="elastic-${GITHUB_SHA::12}"
-          title="Elastic Defend profiles (${GITHUB_SHA::12})"
-          notes="Research and complement Sysmon profiles for hosts running Elastic Defend, generated from commit ${GITHUB_SHA} for Sysmon 15.21 and later."
+          title="Elastic profiles (${GITHUB_SHA::12})"
+          notes="Sysmon profiles generated from commit ${GITHUB_SHA} for Sysmon 15.21 and later: balanced for hosts running Elastic Agent without Elastic Defend, and research and complement for hosts running Elastic Defend."
 
           if gh release view "$tag" >/dev/null 2>&1; then
             echo "Release $tag already exists; nothing to publish."

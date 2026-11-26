@@ -34,14 +34,25 @@ run_tool() {
 
 mkdir -p "$output_dir"
 
-for profile in research complement; do
+# The balanced profile selects what upstream's balanced release selects: every module in the
+# numbered directories except 23_file_delete, whose FileDelete events archive deleted files.
+file_delete_list=$(mktemp)
+trap 'rm -f "$file_delete_list"' EXIT
+(cd "$repo_root" && find 23_file_delete -maxdepth 1 -type f -name '*.xml' | sort) > "$file_delete_list"
+
+for profile in balanced research complement; do
   output_path="$output_dir/sysmonconfig-elastic-$profile.xml"
+  if [ "$profile" = balanced ]; then
+    set -- --exclude-list "$file_delete_list"
+  else
+    set -- --include-list "$script_dir/$profile.txt"
+  fi
 
   # A list entry that does not resolve is only a warning, which would silently drop a module.
   run_tool merge \
     --base-path "$repo_root" \
     --template "$repo_root/templates/sysmon_template.xml" \
-    --include-list "$script_dir/$profile.txt" \
+    "$@" \
     --preserve-comments \
     --sysmon-version 15.21 \
     --unsupported exclude \

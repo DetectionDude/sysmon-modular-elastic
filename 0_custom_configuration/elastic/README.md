@@ -1,13 +1,14 @@
-# Elastic Defend profiles
+# Elastic profiles
 
-Two Sysmon profiles for hosts that also run Elastic Defend:
+Three Sysmon profiles for hosts that run Elastic Agent. Balanced is for hosts without Elastic Defend; research and complement run next to it:
 
-| Profile | Include list | Collection goal |
+| Profile | Selection | Collection goal |
 | --- | --- | --- |
+| Balanced | Every module in the numbered directories except `23_file_delete`, as in upstream's balanced release | Upstream's balanced collection, plus the Elastic modules below and every process creation. For hosts where Sysmon is the endpoint telemetry. |
 | Research | `research.txt` | Every event except Elastic Agent and Elastic Defend noise. For short, controlled research sessions. |
 | Complement | `complement.txt` | Only telemetry that Elastic Defend did not record in a lab comparison, plus evidence of Elastic Defend being stopped or tampered with. |
 
-The selections come from a Detection Lab comparison on September 30, 2026, revalidated on October 2, 2026. It ran Elastic Defend 9.4 with and without Sysmon on two Windows Server hosts. The figures below are one day of one host's workload, mostly administrative activity over SSH. Treat them as a starting point, not a production baseline.
+The research and complement selections come from a Detection Lab comparison on September 30, 2026, revalidated on October 2, 2026. It ran Elastic Defend 9.4 with and without Sysmon on two Windows Server hosts. The figures below are one day of one host's workload, mostly administrative activity over SSH. Treat them as a starting point, not a production baseline.
 
 A three-host test on October 7, 2026, with a Defend-only control on 4-vCPU hosts, replayed the same behaviors against both profiles. Its indexed data confirms that the filters behave as designed on Sysmon 15.22. It lost no records and found no gaps in Elastic Defend's telemetry.
 
@@ -19,26 +20,26 @@ Run the helper from any directory:
 ./0_custom_configuration/elastic/generate-sysmonconfig-elastic.sh
 ```
 
-It writes `sysmonconfig-elastic-research.xml` and `sysmonconfig-elastic-complement.xml` for Sysmon 15.21 to `outputs/`, which Git ignores. Pass another directory as the first argument. CI runs the same helper on every push to the `elastic` branch and publishes both files as an `elastic-<commit>` GitHub release. The helper finds `sysmon-modular` the same way as the [MDE augment helper](../README.md#mde-augment-configuration). Unlike that helper, it treats merge warnings as errors, so a mistyped list entry fails the build instead of silently dropping a module.
+It writes `sysmonconfig-elastic-balanced.xml`, `sysmonconfig-elastic-research.xml`, and `sysmonconfig-elastic-complement.xml` for Sysmon 15.21 to `outputs/`, which Git ignores. Pass another directory as the first argument. CI runs the same helper on every push to the `elastic` branch and publishes all three files as an `elastic-<commit>` GitHub release. The helper finds `sysmon-modular` the same way as the [MDE augment helper](../README.md#mde-augment-configuration). Unlike that helper, it treats merge warnings as errors, so a mistyped list entry fails the build instead of silently dropping a module.
 
 ## Layout
 
-Modules about the Elastic product itself live in the numbered directories next to the other vendor modules. The balanced release profile uses them too:
+Modules about the Elastic product itself live in the numbered directories next to the other vendor modules, so the balanced profile uses them too:
 
 | Module | Change | Lab evidence |
 | --- | --- | --- |
-| `3_network_connection_initiated/exclude_elastic.xml` | Adds the Agent collector and Elastic Defend | The collector made 8,239 of 10,213 Event 3 records |
-| `10_process_access/exclude_elastic.xml` | Adds the Agent collector and Elastic Defend | 3,053,636 and 637,803 Event 10 records. The existing rule only covered `metricbeat.exe`. Nearly all of Elastic Defend's records came before the lab profile's identical rule took effect at 07:25:30; afterward it was no longer among the top 15 sources |
+| `3_network_connection_initiated/exclude_elastic.xml` | Adds Elastic Defend and the Agent's shipping components for every version. Anchors the Winlogbeat and Packetbeat rules, which matched any path ending in those names, to their install folders | The collector made 8,239 of 10,213 Event 3 records |
+| `10_process_access/exclude_elastic.xml` | Adds Elastic Defend, the collector, and `agentbeat.exe` | 3,053,636 and 637,803 Event 10 records. The existing rule only covered `metricbeat.exe`. Nearly all of Elastic Defend's records came before the lab profile's identical rule took effect at 07:25:30; afterward it was no longer among the top 15 sources |
 | `12_13_14_registry_event/exclude_elastic.xml` | New. Excludes only Elastic Defend's CreateKey events | All 18,435 of Elastic Defend's Event 12 records were CreateKey |
-| `17_18_pipe_event/exclude_elastic.xml` | New | Pipes from Elastic Defend and the collector |
+| `17_18_pipe_event/exclude_elastic.xml` | New. Elastic Defend, the collector, and `agentbeat.exe` | Pipes from Elastic Defend and the collector |
 | `17_18_pipe_event/exclude_openssh.xml` | New | 40,442 of 52,285 pipe records were OpenSSH `\W32PosixPipe.*` pipes |
-| `5_process_ended/include_security_process_termination.xml` | Adds `elastic-endpoint.exe`, `elastic-agent.exe`, the collector `elastic-otel-collector.exe`, `endpoint-security.exe`, and the 8.x collector `agentbeat.exe`. Pairs with the Event 1 module below | Sysmon recorded Elastic Defend's crash at 13:13 as an Event 5. The collector ships the Sysmon and Windows logs, so stopping it blinds the SIEM while Elastic Defend keeps running |
+| `5_process_ended/include_security_process_termination.xml` | Adds `elastic-endpoint.exe`, `elastic-agent.exe`, the collector `elastic-otel-collector.exe`, `endpoint-security.exe`, and `agentbeat.exe`, which does the collector's work from 8.15 to 9.2. Pairs with the Event 1 module below | Sysmon recorded Elastic Defend's crash at 13:13 as an Event 5. The collector ships the Sysmon and Windows logs, so stopping it blinds the SIEM while Elastic Defend keeps running |
 | `1_process_creation/include_security_process_creation.xml` | New. Logs the same security tools starting or restarting | Elastic Defend reported only five `elastic-endpoint.exe` process records across both hosts all day, while Sysmon logged 105 starts on one. Without Event 1, Event 5 shows a stop but not the restart, its parent, or its command line |
 | `11_file_create/include_elastic_sensor_file_tampering.xml`, `12_13_14_registry_event/include_elastic_service_tampering.xml`, `26_file_delete_detected/include_elastic_sensor_file_deletion.xml` | New | Tamper evidence, following the MDE sensor modules |
 
 There is no Elastic exclusion for Event 25: Elastic Agent made 5 of the 7 Event 25 records, and an Event 25 exclusion by image would hide hollowing of that image.
 
-The Agent collector runs from a versioned folder such as `C:\Program Files\Elastic\Agent\data\elastic-agent-9.4.4-baed89\components\`, so the modules match it with an anchored `begin with` and `end with` pair.
+Elastic Agent runs its components from a versioned folder such as `C:\Program Files\Elastic\Agent\data\elastic-agent-9.4.4-baed89\components\`. The component that ships data and collects metrics depends on the version: separate Beats such as `filebeat.exe` and `metricbeat.exe` until 8.14, `agentbeat.exe` from 8.15 to 9.2, and `elastic-otel-collector.exe` from 9.3. Every Agent exclusion therefore pairs `begin with C:\Program Files\Elastic\Agent\data\elastic-agent-` with `end with \<binary>.exe`, which matches any version's layout. Standalone Winlogbeat and Packetbeat match the folder their install guides name, such as `C:\Program Files\Winlogbeat\`, or the Beats MSI's `C:\Program Files\Elastic\Beats\<version>\`. An install moved with `--base-path` or `INSTALLDIR` doesn't match, so it's logged as before. `agentbeat.exe` didn't run in the lab, so its rules follow the collector's measurements.
 
 Modules that express a profile decision live in `modules/` here. The merger only discovers XML directly inside numbered directories, including `0_custom_configuration/`, so files in `modules/` never reach the release builds. CI's `validate --all-xml` still checks them.
 
@@ -47,6 +48,18 @@ Modules that express a profile decision live in `modules/` here. The merger only
 Sysmon applies only the first include filter and the first exclude filter it finds for an event ([olafhartong/sysmon-modular#226](https://github.com/olafhartong/sysmon-modular/issues/226)). The merger therefore combines each base filter with the modules' filters for the same event, so a generated profile has one include filter and one exclude filter per event.
 
 Each base gives every event an explicit filter. Sysmon does not document what it does with an event that has no filter, and a default installation logs events 1, 2, 5, and 6. The complement base switches off every event it doesn't log in full, and `complement.txt` then selects include modules that log only what their rules match.
+
+## Balanced profile
+
+The balanced profile is built the way upstream's balanced release is. The merger discovers every module in the numbered directories and leaves out `23_file_delete`, whose FileDelete events archive deleted files. It uses neither list nor the files in `modules/`. Because it's built from this branch, it differs from upstream's release in three ways:
+
+- **The Elastic modules in the table above.** These are the Agent and Elastic Defend exclusions, Agent tamper evidence for events 11, 12–14, and 26, and the Elastic processes in events 1 and 5. Without Elastic Defend, Elastic Agent is the only route Sysmon's events take to Elasticsearch.
+- **Every process creation.** Upstream's `1_process_creation/include_all.xml` matches `OriginalFileName contains \`, and no `OriginalFileName` contains a backslash. So upstream's release logs only the processes its other Event 1 include rules match. Here the rule is `Image contains \`, from the upstream PR draft `fix-include-all`. The merger now puts the catch-all last, so a process that a specific rule matches keeps that rule's ATT&CK name. Against 103 Event 1 records from the lab's September 30 Atomic Red Team batch, upstream's 15.21 release logs 34 and this profile 81. The other 22 are `conhost.exe`, which an upstream exclusion removes.
+- **The fork's other upstream PR modules.** These are the LSASS access masks, `exclude_query_only_access.xml`, the OpenSSH pipes, and PowerShell's own pipes and temporary files.
+
+The Agent exclusions matter even though the balanced profile uses include rules for events 3 and 10. The collector opens other processes with `0x1010`, and this profile logs LSASS opens with that mask. In the lab, the collector got only `0x1000` on LSASS, 24,377 times in a day. On a host where LSASS isn't a protected process, it may get `0x1010`, which looks like credential theft.
+
+Logging every process creation raises Event 1 volume. On the lab host, a profile that logged every process recorded 15,952 Event 1 records in a day, mostly from its test harness. The profile archives nothing, so the archive folder problem below doesn't apply. It hasn't run on a lab host yet.
 
 ## Research profile
 
@@ -60,9 +73,9 @@ Each base gives every event an explicit filter. Sysmon does not document what it
 
 The root settings come from the repository template instead: `ArchiveDirectory` is `Sysmon` rather than `Research`, and `CheckRevocation` is `False`.
 
-On September 30, Elastic Agent and Elastic Defend produced about 74% of the 5,038,347 indexed records, and the Elastic exclusions remove them. On October 7, the research profile logged 1,719,812 records in 6.6 hours. The two exclusions above remove 1,046,910 of them (61%), leaving about 673,000, or about 2.4 million a day on that host. Most of the rest is image loads (421,727, largely PowerShell, sshd, and csc driven by the Ansible harness). During evidence exports, the research host's mean CPU was more than twice the control's, and Sysmon events reached Elasticsearch up to 306 seconds late, though none were lost. Elastic Agent 8.x collects metrics in `components\agentbeat.exe`, which no exclusion covers yet. Run this profile on hosts with headroom and only as long as needed.
+On September 30, Elastic Agent and Elastic Defend produced about 74% of the 5,038,347 indexed records, and the Elastic exclusions remove them. On October 7, the research profile logged 1,719,812 records in 6.6 hours. The two exclusions above remove 1,046,910 of them (61%), leaving about 673,000, or about 2.4 million a day on that host. Most of the rest is image loads (421,727, largely PowerShell, sshd, and csc driven by the Ansible harness). During evidence exports, the research host's mean CPU was more than twice the control's, and Sysmon events reached Elasticsearch up to 306 seconds late, though none were lost. The Elastic exclusions also cover `agentbeat.exe`, which Elastic Agent 8.15 to 9.2 runs instead of the collector, but it wasn't measured. Run this profile on hosts with headroom and only as long as needed.
 
-The research profile uses the upstream Event 3 module, which also excludes any program whose path ends in `winlogbeat.exe` or `packetbeat.exe`. Those rules come from upstream and are raised in the upstream issue draft.
+The research profile uses the Event 3 module above. Its Winlogbeat and Packetbeat rules used to exclude any program whose path ended in those names, and now match only their install folders.
 
 Event 24 is logged, and Sysmon archives clipboard contents, which can include pasted passwords. Protect the archive folder, or switch Event 24 off when that matters. On the lab hosts archiving failed: all 10 Event 255 errors reported that `C:\Sysmon\` is not owned by SYSTEM. The Ansible role installs Sysmon into `C:\sysmon`, which is also the template's archive directory. Changing `ArchiveDirectory` may not be enough, because the lab profile set it to `Research` and the errors still named `C:\Sysmon\`. Move Sysmon's install folder (`sysmon_install_location`) instead.
 
@@ -101,7 +114,7 @@ Event 24 is logged, and Sysmon archives clipboard contents, which can include pa
 ## Open items
 
 - Exercise the complement's targeted rules, which the October 7 replay of September's tests didn't reach: delete a Run value, disable and re-enable a harmless event log channel, change a dummy service whose name starts with `Elastic`, restart the Sysmon service, write the streams `a.txt:b.bat` and `c.txt:d.vbs`, and dump LSASS once with Elastic Defend's credential hardening on.
-- Measure both profiles' cost without evidence collection. The October 7 CPU and latency figures include the test harness's diagnostics and exports.
+- Measure the research and complement profiles' cost without evidence collection. The October 7 CPU and latency figures include the test harness's diagnostics and exports.
 - Check the collector's `GrantedAccess` values. If they are essentially all `0x1000`, as its 24,377 LSASS accesses were, limit the Event 10 exclusion to that mask.
 - Confirm the Elastic service and driver key names on a host. `include_elastic_service_tampering.xml` matches every service whose name starts with `Elastic`.
 - Narrow the Elastic tamper modules for events 11, 12–14, and 26 to Elastic's own programs by full path. They trust any program under `C:\Program Files\Elastic\`, so an administrator could copy a tool there to avoid them. That needs the list of Elastic's executables from a host.
@@ -112,4 +125,5 @@ Event 24 is logged, and Sysmon archives clipboard contents, which can include pa
 - Events 1 and 5 also record Elastic Defend's short-lived helper processes (103 starts on the lab host) and any `elastic-agent.exe` command-line use.
 - Check whether Elastic Defend records driver loads. If it reliably does, Event 6 can be switched off again.
 - Test the remaining provisional rows: unsigned DLL loads (7) and executable drops (29).
-- On Elastic Agent 8.x, measure `components\agentbeat.exe` and add it to the research exclusions if it is as noisy as the 9.x collector.
+- On Elastic Agent 8.15 to 9.2, measure `agentbeat.exe` to confirm that its exclusions match what it does.
+- Run the balanced profile on a lab host without Elastic Defend. Run `hostname.exe` to confirm on Sysmon itself that the Event 1 catch-all matches, measure the profile's volume, and check the collector's LSASS mask on a host where LSASS isn't protected.

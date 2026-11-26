@@ -2,14 +2,15 @@
 
 This project is forked from Olaf Hartong's original [sysmon-modular](https://github.com/olafhartong/sysmon-modular). 
 
-The goal of this repository is to provide usable sysmon configurations to use in combination with Elastic Defend.
+The goal of this repository is to provide usable sysmon configurations for hosts that run Elastic Agent, with or without Elastic Defend.
 
 ## Download
 
-Both profiles need Sysmon 15.21 or later. They always come from the newest [release](https://github.com/DetectionDude/sysmon-modular-elastic/releases/latest), which CI builds on every push to `elastic`.
+Every profile needs Sysmon 15.21 or later. They always come from the newest [release](https://github.com/DetectionDude/sysmon-modular-elastic/releases/latest), which CI builds on every push to `elastic`.
 
 | Profile | Download | Use it to |
 | --- | --- | --- |
+| Balanced | [`sysmonconfig-elastic-balanced.xml`](https://github.com/DetectionDude/sysmon-modular-elastic/releases/latest/download/sysmonconfig-elastic-balanced.xml) | Run on hosts with Elastic Agent but without Elastic Defend. Upstream's balanced profile, plus Elastic Agent noise exclusions and evidence of the Agent being stopped or tampered with. It logs every process creation. |
 | Complement | [`sysmonconfig-elastic-complement.xml`](https://github.com/DetectionDude/sysmon-modular-elastic/releases/latest/download/sysmonconfig-elastic-complement.xml) | Run next to Elastic Defend. It logs only what Defend doesn't record, plus evidence of Defend being stopped or tampered with. |
 | Research | [`sysmonconfig-elastic-research.xml`](https://github.com/DetectionDude/sysmon-modular-elastic/releases/latest/download/sysmonconfig-elastic-research.xml) | Log every event except Elastic Agent and Elastic Defend noise. For short, controlled research sessions: an estimated 2.4 million records a day on a busy lab host. |
 
